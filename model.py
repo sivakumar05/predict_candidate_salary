@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import pickle
+import pypickle
 
 dataset = pd.read_csv('hiring.csv')
 
@@ -32,8 +32,11 @@ regressor = LinearRegression()
 regressor.fit(X, y)
 
 # Saving model to disk
-pickle.dump(regressor, open('model.pkl','wb'))
+#pypickle.dump(regressor, open('model.pkl','wb'))
+status = pypickle.save('model.pkl', regressor)
+
 
 # Loading model to compare the results
-model = pickle.load(open('model.pkl','rb'))
+#model = pickle.load(open('model.pkl','rb'))
+model = pypickle.load('model.pkl')
 print(model.predict([[2, 9, 6]]))
