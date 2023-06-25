@@ -1,7 +1,8 @@
+pip==23.1.2
 Flask==2.0.2
 gunicorn
 numpy
 pandas
 pickle
-matplotlib.pyplot
-sklearn.linear_model
+matplotlib
+scikit-learn
