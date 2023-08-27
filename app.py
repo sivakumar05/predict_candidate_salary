@@ -1,37 +1,51 @@
-import numpy as np
-from flask import Flask, request, jsonify, render_template
-import pickle
+from flask import Flask, request, url_for, redirect, render_template,send_from_directory,make_response
+from Functions import classificationModel
+import pandas as pd
+from fileinput import filename
 
-app = Flask(__name__,static_folder='static',template_folder='templates')
-model = pickle.load(open('model.pkl', 'rb'))
+#trainData = pd.read_excel('C:/HiringEngine/Data/RenegeData.xlsx')
+#traindata=trainData.copy()
+#testData = pd.read_excel('C:/HiringEngine/HiringEngine/RenegeAnalytics/RenegeAnalytics/Data/TestData.xlsx')
+Finalmodel=pd.read_pickle('trained_model.pkl')
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+cmobj=classificationModel.classificationModel()
+#rf_clf,X_train_rf_clf,X_test_rf_clf,y_train_rf_clf,y_test_rf_clf=cmobj.RF(trainData)
+#df=cmobj.preProcesstestData(test_data[:2000],model)
 
-@app.route('/predict',methods=['POST'])
-def predict():
-    '''
-    For rendering results on HTML GUI
-    '''
-    int_features = [int(x) for x in request.form.values()]
-    final_features = [np.array(int_features)]
-    prediction = model.predict(final_features)
+app = Flask(__name__)
 
-    output = round(prediction[0], 2)
+# Root endpoint
+@app.get('/')
+def upload():
+	return render_template('index.html')
+    
 
-    return render_template('index.html', prediction_text='Employee Salary should be $ {}'.format(output))
+@app.post('/view')
+def view():
+ 
+    # Read the File using Flask request
+    file = request.files['file']
+    # save file in local directory
+    file.save(file.filename)
+ 
+    # Parse the data as a Pandas DataFrame type
+    testdata = pd.read_excel(file)
+    resultdata=cmobj.preProcesstestData(testdata,Finalmodel)
+    #resultdata.to_excel('resultdata.xlsx',index=False)
+    
+    resp = make_response(resultdata.to_csv(index=False))
+    resp.headers["Content-Disposition"] = "attachment; filename=Renege_Result.csv"
+    resp.headers["Content-Type"] = "text/csv"
+    return resp
 
-@app.route('/predict_api',methods=['POST'])
-def predict_api():
-    '''
-    For direct API calls trought request
-    '''
-    data = request.get_json(force=True)
-    prediction = model.predict([np.array(list(data.values()))])
+@app.post('/template')
+def template():
+    resp1 = make_response(traindata.to_csv(index=False))
+    resp1.headers["Content-Disposition"] = "attachment; filename=RawData_Template.csv"
+    resp1.headers["Content-Type"] = "text/csv"
+    return resp1
 
-    output = prediction[0]
-    return jsonify(output)
 
-if __name__ == "__main__":
-    app.run(debug=True)
+        
+if __name__ =="__main__":
+    app.run()
